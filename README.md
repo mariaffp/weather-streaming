@@ -57,11 +57,11 @@ weather-streaming/
 ├── notebooks/
 │
 ├── src/
-│   ├── ingestion/
-│   ├── simulation/
-│   ├── processing/
-│   ├── models/
-│   └── utils/
+│   ├── config.py
+│   ├── producer.py
+│   ├── consumer.py
+│   ├── streaming.py
+│   └── ml.py
 │
 ├── tests/
 │
