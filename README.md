@@ -30,6 +30,21 @@ O foco é identificar padrões e condições meteorológicas associadas a chuvas
 | Machine Learning | Análise e classificação de padrões |
 | Git/GitHub | Versionamento e colaboração |
 
+## Como executar
+
+Pré-requisitos — **Windows:** WSL2 com Ubuntu + Docker Desktop com integração WSL ativada. **Linux:** Docker Engine com plugin Compose. Ambos: `python3` e `python3-venv` (no Windows, dentro do Ubuntu).
+
+```bash
+git clone https://github.com/mariaffp/weather-streaming
+cd weather-streaming
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+docker compose up -d
+```
+
+Guia completo por sistema, teste do producer + consumer e solução de problemas: [docs/setup.md](docs/setup.md).
+
 ## Arquitetura proposta
 
 O fluxo previsto para a aplicação é:
