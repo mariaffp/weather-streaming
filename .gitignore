@@ -230,3 +230,11 @@ data/processed/*
 !data/processed/.gitkeep
 .env
 DIARIO.md
+
+# Apache Spark - arquivos gerados localmente
+/data/entrada/
+/data/processados/
+/data/checkpoints/
+
+# Configuracoes locais do IntelliJ
+.idea/
