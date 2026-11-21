@@ -231,6 +231,7 @@ data/processed/*
 !data/processed/.gitkeep
 .env
 DIARIO.md
+RELATORIO_SESSAO_2026-11-21.md
 
 # Apache Spark - arquivos gerados localmente
 /data/entrada/

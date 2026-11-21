@@ -55,4 +55,4 @@ O timestamp vira tipo timestamp, com watermark de 10 minutos; janelas diárias t
 ## Ainda não existe
 
 - Modelo de ML (`src/ml.py` está vazio) e sua integração ao fluxo de streaming.
-- Ligação com a lógica do grupo (`streaming_arquivos.py`, independente e intocado), incluindo os bloqueios conhecidos: schema DDL hardcoded, variável inexistente em `streaming_arquivos.py:136` e `gerar_lote.py` escrevendo fora de `data/entrada/`.
+- Ligação com a lógica do grupo (decisão: manter os dois caminhos — o fluxo de arquivos segue independente e intocado; ponte Kafka→`data/entrada/` e variáveis novas como próximos passos; convergência depois), incluindo os bloqueios conhecidos: schema DDL hardcoded, variável inexistente em `streaming_arquivos.py:136` e `gerar_lote.py` escrevendo fora de `data/entrada/`.

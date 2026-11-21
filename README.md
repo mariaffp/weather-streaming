@@ -181,7 +181,7 @@ weather-streaming/
 
 Já funciona: Kafka em container via Docker Compose; `src/producer.py` envia registros sintéticos ou reais (INMET) em JSON; `src/consumer.py` imprime os registros recebidos; `src/streaming_kafka.py` lê o tópico com `--fonte` e acusa fonte trocada numa segunda tabela; `src/streaming_kafka_processado.py` classifica, agrega por dia/estação e grava Parquet em `data/processed`. Fluxo validado manualmente de ponta a ponta; 53 testes passam com `python -m pytest tests/ -q`. Regra prática: producer e Spark precisam usar a mesma fonte.
 
-A base real do INMET está analisada ([docs/dados-inmet.md](docs/dados-inmet.md)). Ainda NÃO estão feitos: o modelo de ML e sua integração, e a ligação com a lógica do grupo (`streaming_arquivos.py`, independente e intocado). Nada no pipeline classifica "chuva intensa" ou "instabilidade": isso é a etapa de ML, do grupo, ainda pendente.
+A base real do INMET está analisada ([docs/dados-inmet.md](docs/dados-inmet.md)). Ainda NÃO estão feitos: o modelo de ML e sua integração, e a ligação com a lógica do grupo (decisão: manter os dois caminhos; ponte Kafka→arquivos + variáveis novas; convergência depois). Nada no pipeline classifica "chuva intensa" ou "instabilidade": isso é a etapa de ML, do grupo, ainda pendente.
 
 ## Status do projeto
 
@@ -198,7 +198,7 @@ Etapas iniciais:
 - [x] Producer com fonte real.
 - [x] Spark com dados reais (validado manualmente).
 - [x] Pré-processamento em fluxo (Parquet, validado manualmente).
-- [ ] Ligação com a lógica do grupo (`streaming_arquivos.py`, independente e intocado).
+- [ ] Ligação com a lógica do grupo (decisão: manter os dois caminhos; ponte Kafka→`data/entrada/` + variáveis novas no fluxo dela; `streaming_arquivos.py` segue intocado).
 - [ ] Treinamento do modelo de Machine Learning.
 - [ ] Integração do modelo ao fluxo de streaming.
 - [ ] Testes e avaliação dos resultados.
