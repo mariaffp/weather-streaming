@@ -32,7 +32,7 @@ O foco é identificar padrões e condições meteorológicas associadas a chuvas
 
 ## Como executar
 
-Pré-requisitos — **Windows:** WSL2 com Ubuntu + Docker Desktop com integração WSL ativada. **Linux:** Docker Engine com plugin Compose. Ambos: `python3` e `python3-venv` (no Windows, dentro do Ubuntu).
+Pré-requisitos — **Windows:** WSL2 com Ubuntu + Docker Desktop com integração WSL ativada. **Linux:** Docker Engine com plugin Compose. Ambos: `python3` e `python3-venv` (no Windows, dentro do Ubuntu) e Java 17 (`sudo apt install openjdk-17-jdk`). O `pip install -r requirements.txt` traz o `pyspark==4.3.0`.
 
 ```bash
 git clone https://github.com/mariaffp/weather-streaming
@@ -44,6 +44,46 @@ docker compose up -d
 ```
 
 Guia completo por sistema, teste do producer + consumer e solução de problemas: [docs/setup.md](docs/setup.md).
+
+## Colinha de testes
+
+Em todos os terminais: estar na raiz do projeto e rodar `source .venv/bin/activate` antes.
+
+**Teste Kafka (producer + consumer).** Terminal 1:
+
+```bash
+docker compose down && docker compose up -d
+```
+
+Esperar uns 10 a 15 segundos o broker ficar pronto. Terminal 2:
+
+```bash
+python -m src.consumer
+```
+
+Terminal 3:
+
+```bash
+python -m src.producer --n 5 --intervalo 0.2
+```
+
+Esperado: 5 linhas no consumer, com `id_registro` de 0 a 4 e `origem=sintetico`.
+
+**Teste Spark.** Com o Kafka no ar — se o teste do Kafka foi rodado antes, recrie primeiro com `docker compose down && docker compose up -d` e espere uns 10 a 15 segundos, senão o Spark também mostra as mensagens do teste anterior por causa do `startingOffsets=earliest`. Terminal 2:
+
+```bash
+python -m src.producer --n 5 --intervalo 0.2
+```
+
+Terminal 3, em uma linha só:
+
+```bash
+PYTHONPATH=. spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.13:4.3.0 src/streaming_kafka.py
+```
+
+Esperado: um `Batch: 0` com tabela de 9 colunas e 5 linhas; `Ctrl+C` encerra. O primeiro run demora alguns minutos e gera muito log. O producer deve rodar antes do Spark, para o tópico existir.
+
+Para derrubar tudo: `docker compose down`.
 
 ## Arquitetura proposta
 
@@ -69,23 +109,41 @@ weather-streaming/
 │   ├── raw/
 │   └── processed/
 │
-├── notebooks/
-│
 ├── src/
 │   ├── config.py
+│   ├── synthetic_schema.py
+│   ├── synthetic_simulator.py
 │   ├── producer.py
 │   ├── consumer.py
+│   ├── streaming_kafka.py
 │   ├── streaming.py
+│   ├── streaming_arquivos.py
+│   ├── gerar_lote.py
+│   ├── consultar_estatisticas.py
 │   └── ml.py
 │
 ├── tests/
+│   ├── test_config.py
+│   └── test_synthetic.py
 │
 ├── docs/
+│   ├── arquitetura.md
+│   └── setup.md
 │
+├── docker-compose.yml
 ├── requirements.txt
+├── status_projeto.md
 ├── .gitignore
 └── README.md
 ```
+
+`src/streaming.py` faz processamento em lote (exploração de 100 registros gerados em memória).
+
+## Estado atual
+
+Já funciona: Kafka em container via Docker Compose; `src/producer.py` envia registros sintéticos em JSON com `--n`, `--intervalo` e `--aceleracao`; `src/consumer.py` imprime os registros recebidos; `src/streaming_kafka.py` lê o tópico com Spark Structured Streaming e mostra os registros no console, com o schema derivado de `src/synthetic_schema.py` (`TIPOS`).
+
+Os dados são sintéticos e provisórios, gerados por sorteio sem significado meteorológico. Ainda NÃO estão feitos: a análise da base real, a ligação do Kafka à lógica de validação/agregação/Parquet do grupo (`streaming_arquivos.py`), o pré-processamento definitivo e o ML.
 
 ## Status do projeto
 
@@ -95,9 +153,9 @@ Etapas iniciais:
 - [ ] Análise da base meteorológica.
 - [ ] Definição das variáveis e do objetivo do modelo.
 - [ ] Preparação dos dados.
-- [ ] Configuração do Kafka.
-- [ ] Implementação do simulador de dados.
-- [ ] Implementação do processamento com Spark.
+- [x] Configuração do Kafka.
+- [x] Implementação do simulador de dados (parcial: dados sintéticos provisórios).
+- [x] Implementação do processamento com Spark (parcial: lê o tópico, ainda sem ligar à lógica do grupo).
 - [ ] Treinamento do modelo de Machine Learning.
 - [ ] Integração do modelo ao fluxo de streaming.
 - [ ] Testes e avaliação dos resultados.
