@@ -85,6 +85,14 @@ Esperado: um `Batch: 0` com tabela de 9 colunas e 5 linhas; `Ctrl+C` encerra. O 
 
 Para derrubar tudo: `docker compose down`.
 
+**Testes unitários.** Na raiz, com o `.venv` ativo:
+
+```bash
+python -m pytest tests/ -q
+```
+
+Esperado: `36 passed`.
+
 ## Arquitetura proposta
 
 O fluxo previsto para a aplicação é:
@@ -98,7 +106,13 @@ O fluxo previsto para a aplicação é:
 
 ## Dados
 
-A base meteorológica utilizada será documentada após a análise de sua origem, período, variáveis disponíveis e qualidade dos registros.
+Dados reais do INMET: 4 estações (A607 Campos dos Goytacazes, A608 Macaé, A620 Campos - São Tomé, A627 Niterói), ano de 2025, 1 registro por hora (8.760 por estação, 35.040 no total). Formato: Latin-1, separador `;`, decimal com vírgula. Detalhes em [docs/dados-inmet.md](docs/dados-inmet.md).
+
+Nenhuma estação é de Rio das Ostras nem de Cabo Frio; Macaé (A608) é a mais próxima citada nos arquivos.
+
+Coloque os CSVs em `data/raw/inmet/`. A pasta é ignorada pelo Git: quem clonar precisa receber os arquivos pelo grupo.
+
+Link para baixar os CSVs: [A DEFINIR PELO GRUPO]
 
 ## Estrutura prevista
 
@@ -107,12 +121,15 @@ weather-streaming/
 │
 ├── data/
 │   ├── raw/
+│   │   └── inmet/ (CSVs do INMET, fora do Git)
 │   └── processed/
 │
 ├── src/
 │   ├── config.py
 │   ├── synthetic_schema.py
 │   ├── synthetic_simulator.py
+│   ├── inmet_schema.py
+│   ├── inmet_reader.py
 │   ├── producer.py
 │   ├── consumer.py
 │   ├── streaming_kafka.py
@@ -124,11 +141,14 @@ weather-streaming/
 │
 ├── tests/
 │   ├── test_config.py
-│   └── test_synthetic.py
+│   ├── test_synthetic.py
+│   └── test_inmet.py
 │
 ├── docs/
 │   ├── arquitetura.md
-│   └── setup.md
+│   ├── setup.md
+│   ├── dados-inmet.md
+│   └── amostras/
 │
 ├── docker-compose.yml
 ├── requirements.txt
@@ -143,19 +163,23 @@ weather-streaming/
 
 Já funciona: Kafka em container via Docker Compose; `src/producer.py` envia registros sintéticos em JSON com `--n`, `--intervalo` e `--aceleracao`; `src/consumer.py` imprime os registros recebidos; `src/streaming_kafka.py` lê o tópico com Spark Structured Streaming e mostra os registros no console, com o schema derivado de `src/synthetic_schema.py` (`TIPOS`).
 
-Os dados são sintéticos e provisórios, gerados por sorteio sem significado meteorológico. Ainda NÃO estão feitos: a análise da base real, a ligação do Kafka à lógica de validação/agregação/Parquet do grupo (`streaming_arquivos.py`), o pré-processamento definitivo e o ML.
+Os dados que passam pelo Kafka e pelo Spark são sintéticos e provisórios, gerados por sorteio sem significado meteorológico. A base real do INMET está analisada ([docs/dados-inmet.md](docs/dados-inmet.md)) e o leitor (`src/inmet_reader.py`) está pronto e validado, mas os dados reais ainda NÃO passam pelo producer nem pelo Spark. Ainda NÃO estão feitos: o producer com fonte real, o Spark com dados reais, a ligação do Kafka à lógica de validação/agregação/Parquet do grupo (`streaming_arquivos.py`), o pré-processamento definitivo e o ML.
 
 ## Status do projeto
 
 Em desenvolvimento.
 
 Etapas iniciais:
-- [ ] Análise da base meteorológica.
+- [x] Análise da base meteorológica (INMET 2025, ver docs/dados-inmet.md).
 - [ ] Definição das variáveis e do objetivo do modelo.
 - [ ] Preparação dos dados.
 - [x] Configuração do Kafka.
 - [x] Implementação do simulador de dados (parcial: dados sintéticos provisórios).
 - [x] Implementação do processamento com Spark (parcial: lê o tópico, ainda sem ligar à lógica do grupo).
+- [x] Leitor dos dados reais (validado nas 4 estações).
+- [ ] Producer com fonte real.
+- [ ] Spark com dados reais.
+- [ ] Pré-processamento definitivo.
 - [ ] Treinamento do modelo de Machine Learning.
 - [ ] Integração do modelo ao fluxo de streaming.
 - [ ] Testes e avaliação dos resultados.
