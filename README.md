@@ -69,6 +69,20 @@ python -m src.producer --n 5 --intervalo 0.2
 
 Esperado: 5 linhas no consumer, com `id_registro` de 0 a 4 e `origem=sintetico`.
 
+**Teste producer INMET.** Com o Kafka zerado (`docker compose down && docker compose up -d`, 10–15 s). Terminal 2:
+
+```bash
+python -m src.consumer
+```
+
+Terminal 3:
+
+```bash
+python -m src.producer --fonte inmet --n 8
+```
+
+Esperado: 8 linhas, horas `2025-01-01T00:00` e `01:00`, 4 estações em ordem de código; ausente aparece como `=None`.
+
 **Teste Spark.** Com o Kafka no ar — se o teste do Kafka foi rodado antes, recrie primeiro com `docker compose down && docker compose up -d` e espere uns 10 a 15 segundos, senão o Spark também mostra as mensagens do teste anterior por causa do `startingOffsets=earliest`. Terminal 2:
 
 ```bash
@@ -91,7 +105,7 @@ Para derrubar tudo: `docker compose down`.
 python -m pytest tests/ -q
 ```
 
-Esperado: `36 passed`.
+Esperado: `53 passed`. O `requirements.txt` está congelado com `pip freeze`.
 
 ## Arquitetura proposta
 
@@ -110,9 +124,7 @@ Dados reais do INMET: 4 estações (A607 Campos dos Goytacazes, A608 Macaé, A62
 
 Nenhuma estação é de Rio das Ostras nem de Cabo Frio; Macaé (A608) é a mais próxima citada nos arquivos.
 
-Coloque os CSVs em `data/raw/inmet/`. A pasta é ignorada pelo Git: quem clonar precisa receber os arquivos pelo grupo.
-
-Link para baixar os CSVs: [A DEFINIR PELO GRUPO]
+Os 4 CSVs estão versionados em `data/raw/inmet/`: o clone já os traz. Outros arquivos do INMET colocados em `data/raw/` continuam ignorados pelo Git.
 
 ## Estrutura prevista
 
@@ -121,7 +133,7 @@ weather-streaming/
 │
 ├── data/
 │   ├── raw/
-│   │   └── inmet/ (CSVs do INMET, fora do Git)
+│   │   └── inmet/ (4 CSVs do INMET, versionados)
 │   └── processed/
 │
 ├── src/
@@ -130,9 +142,12 @@ weather-streaming/
 │   ├── synthetic_simulator.py
 │   ├── inmet_schema.py
 │   ├── inmet_reader.py
+│   ├── validacao.py
 │   ├── producer.py
 │   ├── consumer.py
 │   ├── streaming_kafka.py
+│   ├── streaming_kafka_processado.py
+│   ├── consultar_processados.py
 │   ├── streaming.py
 │   ├── streaming_arquivos.py
 │   ├── gerar_lote.py
@@ -142,7 +157,10 @@ weather-streaming/
 ├── tests/
 │   ├── test_config.py
 │   ├── test_synthetic.py
-│   └── test_inmet.py
+│   ├── test_inmet.py
+│   ├── test_producer.py
+│   ├── test_streaming_kafka.py
+│   └── test_validacao.py
 │
 ├── docs/
 │   ├── arquitetura.md
@@ -161,9 +179,9 @@ weather-streaming/
 
 ## Estado atual
 
-Já funciona: Kafka em container via Docker Compose; `src/producer.py` envia registros sintéticos em JSON com `--n`, `--intervalo` e `--aceleracao`; `src/consumer.py` imprime os registros recebidos; `src/streaming_kafka.py` lê o tópico com Spark Structured Streaming e mostra os registros no console, com o schema derivado de `src/synthetic_schema.py` (`TIPOS`).
+Já funciona: Kafka em container via Docker Compose; `src/producer.py` envia registros sintéticos ou reais (INMET) em JSON; `src/consumer.py` imprime os registros recebidos; `src/streaming_kafka.py` lê o tópico com `--fonte` e acusa fonte trocada numa segunda tabela; `src/streaming_kafka_processado.py` classifica, agrega por dia/estação e grava Parquet em `data/processed`. Fluxo validado manualmente de ponta a ponta; 53 testes passam com `python -m pytest tests/ -q`. Regra prática: producer e Spark precisam usar a mesma fonte.
 
-Os dados que passam pelo Kafka e pelo Spark são sintéticos e provisórios, gerados por sorteio sem significado meteorológico. A base real do INMET está analisada ([docs/dados-inmet.md](docs/dados-inmet.md)) e o leitor (`src/inmet_reader.py`) está pronto e validado, mas os dados reais ainda NÃO passam pelo producer nem pelo Spark. Ainda NÃO estão feitos: o producer com fonte real, o Spark com dados reais, a ligação do Kafka à lógica de validação/agregação/Parquet do grupo (`streaming_arquivos.py`), o pré-processamento definitivo e o ML.
+A base real do INMET está analisada ([docs/dados-inmet.md](docs/dados-inmet.md)). Ainda NÃO estão feitos: o modelo de ML e sua integração, e a ligação com a lógica do grupo (`streaming_arquivos.py`, independente e intocado). Nada no pipeline classifica "chuva intensa" ou "instabilidade": isso é a etapa de ML, do grupo, ainda pendente.
 
 ## Status do projeto
 
@@ -175,11 +193,12 @@ Etapas iniciais:
 - [ ] Preparação dos dados.
 - [x] Configuração do Kafka.
 - [x] Implementação do simulador de dados (parcial: dados sintéticos provisórios).
-- [x] Implementação do processamento com Spark (parcial: lê o tópico, ainda sem ligar à lógica do grupo).
+- [x] Implementação do processamento com Spark (lê com --fonte e proteção; Parquet pronto; ligação com o grupo pendente).
 - [x] Leitor dos dados reais (validado nas 4 estações).
-- [ ] Producer com fonte real.
-- [ ] Spark com dados reais.
-- [ ] Pré-processamento definitivo.
+- [x] Producer com fonte real.
+- [x] Spark com dados reais (validado manualmente).
+- [x] Pré-processamento em fluxo (Parquet, validado manualmente).
+- [ ] Ligação com a lógica do grupo (`streaming_arquivos.py`, independente e intocado).
 - [ ] Treinamento do modelo de Machine Learning.
 - [ ] Integração do modelo ao fluxo de streaming.
 - [ ] Testes e avaliação dos resultados.

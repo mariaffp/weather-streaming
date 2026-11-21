@@ -1,6 +1,6 @@
 # Dados reais do INMET
 
-Resumo verificado dos arquivos em `data/raw/inmet/` (pasta ignorada pelo Git). Período: 2025. Nada aqui foi corrigido nem convertido.
+Resumo verificado dos arquivos em `data/raw/inmet/` (versionados no Git). Período: 2025. Nada aqui foi corrigido nem convertido.
 
 ## Arquivos
 
