@@ -20,6 +20,14 @@ FAIXAS = {
     "vento_kmh": (0.0, 80.0),
 }
 
+TIPOS = {
+    "id_registro": "long",
+    "timestamp": "string",
+    "cidade": "string",
+    "origem": "string",
+    **{coluna: "double" for coluna in FAIXAS},
+}
+
 ORIGEM_SINTETICA = "sintetico"
 
 PASSO_SIMULADO_SEGUNDOS = 600
