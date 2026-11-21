@@ -138,3 +138,13 @@ def test_amostras_filtros():
     todos = list(ler_registros(AMOSTRAS))
     assert len(selecionar(todos, ["A608"], None, 100)) == 3
     assert len(selecionar(todos, None, "2025-07-01T00:00:00+00:00", 100)) == 6
+
+
+def test_filtro_estacao_a608_com_iterador():
+    registros = selecionar(ler_registros(AMOSTRAS), ["A608"], None, 100)
+    assert len(registros) == 3
+
+
+def test_filtro_estacao_a607_com_iterador():
+    registros = selecionar(ler_registros(AMOSTRAS), ["A607"], None, 100)
+    assert len(registros) == 3

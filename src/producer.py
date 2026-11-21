@@ -52,6 +52,7 @@ def parsear_inicio(valor):
 
 
 def selecionar(registros, estacoes, inicio, n):
+    registros = list(registros)
     if estacoes:
         conhecidos = sorted({r["estacao_codigo"] for r in registros})
         desconhecidas = [e for e in estacoes if e not in conhecidos]
