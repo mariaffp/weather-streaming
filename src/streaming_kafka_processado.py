@@ -38,6 +38,7 @@ CHECKPOINTS = {
 def parse_args(argv=None):
     parser = argparse.ArgumentParser(description="Processa o tópico do Kafka com Spark.")
     parser.add_argument("--fonte", choices=["sintetico", "inmet"], default="sintetico")
+    parser.add_argument("--ml", action="store_true")
     return parser.parse_args(argv)
 
 
@@ -142,6 +143,19 @@ def main():
         .option("checkpointLocation", CHECKPOINTS["agregados"])
         .start()
     )
+    if args.ml:
+        if args.fonte != "inmet":
+            raise ValueError("A previsão ML está disponível somente para a fonte INMET.")
+        from src.ml_streaming import criar_processador_ml
+        processar_ml = criar_processador_ml(spark)
+        consultas.append(
+            validos.writeStream
+            .queryName("previsao_ml")
+            .foreachBatch(processar_ml)
+            .outputMode("append")
+            .option("checkpointLocation", "data/checkpoints/previsoes_ml")
+            .start()
+        )
     spark.streams.awaitAnyTermination()
 
 

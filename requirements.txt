@@ -10,3 +10,6 @@ pyspark==4.3.0
 pytest==9.2.0
 python-dateutil==4.0.0
 tzdata==2026.6
+joblib
+scikit-learn
+matplotlib
